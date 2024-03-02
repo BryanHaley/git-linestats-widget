@@ -61,7 +61,10 @@ want_quit = False
 def update_labels():
     while not want_quit:
         files_changed, insertions, deletions = get_git_info()
-        changed_files.config(text = str(files_changed) + " file(s) changed")
+        if files_changed == 1:
+            changed_files.config(text = str(files_changed) + " file changed")
+        else:
+            changed_files.config(text = str(files_changed) + " files changed")
         plus_lines.config(text = "+" + str(insertions))
         minus_lines.config(text = "-" + str(deletions))
         time.sleep(settings["window"]["refresh_rate"])

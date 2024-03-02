@@ -22,6 +22,7 @@ Edit `settings.json` and at minimum change the `"repo"` property to the path to 
 ```
 "repo": "C:/Projects/mycoolrepository"
 ```
+You **must** use forward slashes `/` or double backslashes `\\` for the path separators.
 
 Launch the widget using `python git_linestats_widget.py` or by double clicking `launch.bat` on Windows.
 

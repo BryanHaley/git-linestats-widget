@@ -1,0 +1,34 @@
+{
+  "repo": "C:/Path/To/Repository",
+  "window": {
+    "title": "Git Line Stats Widget",
+    "background": "#00FFFF",
+    "geometry": "600x100",
+    "layout": "horizontal",
+    "refresh_rate": 5
+  },
+  "separator": {
+    "text": " | ",
+    "font": "Arial",
+    "size": 25,
+    "color": "black"
+  },
+  "changed_lines": {
+    "enabled": true,
+    "font": "Arial",
+    "size": 25,
+    "color": "black"
+  },
+  "plus_lines": {
+    "enabled": true,
+    "font": "Arial",
+    "size": 25,
+    "color": "green"
+  },
+  "minus_lines": {
+    "enabled": true,
+    "font": "Arial",
+    "size": 25,
+    "color": "red"
+  }
+}

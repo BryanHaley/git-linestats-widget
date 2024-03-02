@@ -8,7 +8,9 @@ Fonts and colors can be configured via `settings.json`.
 
 # Prerequisites
 
-You need Python3 installed (and on the PATH, if launching via batch file). On Windows, tkinter should come with Python. On other platforms you may need to do `pip install tk`.
+You need Python3 installed (and on the PATH, if launching via batch file).
+
+On Windows, tkinter should come with Python. On other platforms you may need to do `pip install tk`.
 
 You'll also need git installed and on the PATH, which you presumably should already if you have a git repository.
 

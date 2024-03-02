@@ -4,6 +4,8 @@ A small GUI widget for displaying how many lines have changed in a git repo. Use
 
 ![Screenshot of widget](https://i.imgur.com/m2lhlCj.png)
 
+Fonts and colors can be configured via `settings.json`.
+
 # Prerequisites
 
 You need Python3 installed. On Windows, tkinter should come with Python. On other platforms you may need to do `pip install tk`.

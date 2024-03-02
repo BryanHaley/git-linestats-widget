@@ -4,7 +4,7 @@ A small GUI widget for displaying how many lines have changed in a git repo. Use
 
 ![Screenshot of widget](https://i.imgur.com/m2lhlCj.png)
 
-Fonts and colors can be configured via `settings.json`.
+Fonts and colors can be configured via `settings.json`. Most HTML fonts and color codes will work.
 
 # Prerequisites
 

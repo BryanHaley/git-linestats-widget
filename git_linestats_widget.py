@@ -24,7 +24,7 @@ settings = {
         "size": 25,
         "color": "black"
     },
-    "changed_lines": {
+    "changed_files": {
         "enabled": True,
         "font": "Arial",
         "size": 25,
@@ -45,7 +45,7 @@ settings = {
 }
 
 # Labels that will be updated in another thread
-changed_lines = None
+changed_files = None
 plus_lines = None
 minus_lines = None
 
@@ -61,7 +61,7 @@ want_quit = False
 def update_labels():
     while not want_quit:
         files_changed, insertions, deletions = get_git_info()
-        changed_lines.config(text = str(files_changed) + " file(s) changed")
+        changed_files.config(text = str(files_changed) + " file(s) changed")
         plus_lines.config(text = "+" + str(insertions))
         minus_lines.config(text = "-" + str(deletions))
         time.sleep(settings["window"]["refresh_rate"])
@@ -129,11 +129,11 @@ if __name__ == "__main__":
         window.geometry(settings["window"]["geometry"])
         
         # Create labels
-        changed_lines = tk.Label(window,
+        changed_files = tk.Label(window,
             text="100 file(s) changed",
             background=settings["window"]["background"],
-            foreground=settings["changed_lines"]["color"],
-            font=(settings["changed_lines"]["font"], settings["changed_lines"]["size"])
+            foreground=settings["changed_files"]["color"],
+            font=(settings["changed_files"]["font"], settings["changed_files"]["size"])
         )
         separator1 = tk.Label(window,
             text=settings["separator"]["text"],
@@ -162,8 +162,8 @@ if __name__ == "__main__":
         
         # Pack labels based on layout orientation
         if settings["window"]["layout"] == "horizontal":
-            if settings["changed_lines"]["enabled"]:
-                changed_lines.pack(side='left')
+            if settings["changed_files"]["enabled"]:
+                changed_files.pack(side='left')
                 if settings["plus_lines"]["enabled"]:
                     separator1.pack(side='left')
             
@@ -171,11 +171,11 @@ if __name__ == "__main__":
                 plus_lines.pack(side='left')
             
             if settings["minus_lines"]["enabled"]:
-                if settings["plus_lines"]["enabled"] or settings["changed_lines"]["enabled"]:
+                if settings["plus_lines"]["enabled"] or settings["changed_files"]["enabled"]:
                     separator2.pack(side='left')
                 minus_lines.pack(side='left')
         else:
-            changed_lines.pack(side='top')
+            changed_files.pack(side='top')
             plus_lines.pack(side='top')
             minus_lines.pack(side='top')
         

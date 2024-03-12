@@ -15,10 +15,10 @@ settings = {
     "window": {
         "title": "Git Line Stats Widget",
         "background": "#00FFFF",
-        "geometry": "600x100",
+        "geometry": "500x100",
         "layout": "horizontal",
         "refresh_rate": 5,
-        "pad": 0
+        "pad": 10
     },
     "separator": {
         "text": " | ",

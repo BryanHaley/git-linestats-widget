@@ -17,7 +17,8 @@ settings = {
         "background": "#00FFFF",
         "geometry": "600x100",
         "layout": "horizontal",
-        "refresh_rate": 5
+        "refresh_rate": 5,
+        "pad": 0
     },
     "separator": {
         "text": " | ",
@@ -86,6 +87,7 @@ def get_git_info():
             # Call git subprocess
             diff_text = subprocess.check_output(['git', '--no-pager', 'diff', '--shortstat'], cwd=settings["repo"], startupinfo=sp_startup_info).decode("utf-8").strip()
         else:
+            # Call git subprocess without extra startup flags
             diff_text = subprocess.check_output(['git', '--no-pager', 'diff', '--shortstat'], cwd=settings["repo"]).decode("utf-8").strip()
         print(diff_text)
     
@@ -123,6 +125,10 @@ if __name__ == "__main__":
                 raise Exception("Repository path does not exist: " + test)
             if not os.path.exists(os.path.join(test, ".git")):
                 raise Exception("Path is not a git repository: " + test)
+            
+            # Add pad value to settings if not present
+            if "pad" not in temp_settings["window"]:
+                temp_settings["window"]["pad"] = 0;
             
             # Could do more extensive testing here, but meh, it'll cause a runtime exception if something is bad
         except:
@@ -176,21 +182,31 @@ if __name__ == "__main__":
         # Pack labels based on layout orientation
         if settings["window"]["layout"] == "horizontal":
             if settings["changed_files"]["enabled"]:
-                changed_files.pack(side='left')
+                changed_files.pack(side='left', padx = (settings["window"]["pad"], settings["window"]["pad"]))
                 if settings["plus_lines"]["enabled"]:
                     separator1.pack(side='left')
             
             if settings["plus_lines"]["enabled"]:
-                plus_lines.pack(side='left')
+                plus_lines.pack(side='left', padx = (settings["window"]["pad"], settings["window"]["pad"]))
             
             if settings["minus_lines"]["enabled"]:
                 if settings["plus_lines"]["enabled"] or settings["changed_files"]["enabled"]:
                     separator2.pack(side='left')
-                minus_lines.pack(side='left')
+                minus_lines.pack(side='left', padx = (settings["window"]["pad"], settings["window"]["pad"]))
+        elif settings["window"]["layout"] == "stacked":
+            if settings["changed_files"]["enabled"]:
+                changed_files.pack(side='top')
+            if settings["plus_lines"]["enabled"]:
+                plus_lines.pack(side='left', padx = (settings["window"]["pad"], 0))
+            if settings["minus_lines"]["enabled"]:
+                minus_lines.pack(side='right', padx = (0, settings["window"]["pad"]))
         else:
-            changed_files.pack(side='top')
-            plus_lines.pack(side='top')
-            minus_lines.pack(side='top')
+            if settings["changed_files"]["enabled"]:
+                changed_files.pack(side='top')
+            if settings["plus_lines"]["enabled"]:
+                plus_lines.pack(side='top')
+            if settings["minus_lines"]["enabled"]:
+                minus_lines.pack(side='top')
         
         
         # Start label updater thread

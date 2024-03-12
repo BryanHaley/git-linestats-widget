@@ -5,6 +5,7 @@ import json
 import re
 import subprocess
 import traceback
+import platform
 import tkinter as tk
 from tkinter import *
 from threading import Thread
@@ -76,7 +77,16 @@ def get_git_info():
     deletions = 0
     
     try:
-        diff_text = subprocess.check_output(['git', '--no-pager', 'diff', '--shortstat'], cwd=settings["repo"]).decode("ansi").strip()
+        if platform.system() == 'Windows':
+            # Prevent a cmd prompt/terminal window from popping up
+            sp_startup_info = subprocess.STARTUPINFO()
+            sp_startup_info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            sp_startup_info.wShowWindow = subprocess.SW_HIDE
+
+            # Call git subprocess
+            diff_text = subprocess.check_output(['git', '--no-pager', 'diff', '--shortstat'], cwd=settings["repo"], startupinfo=sp_startup_info).decode("utf-8").strip()
+        else:
+            diff_text = subprocess.check_output(['git', '--no-pager', 'diff', '--shortstat'], cwd=settings["repo"]).decode("utf-8").strip()
         print(diff_text)
     
         search_result = changed_regex.search(diff_text)

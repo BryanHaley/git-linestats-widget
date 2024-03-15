@@ -2,7 +2,8 @@
 
 A small GUI widget for displaying how many lines have changed in a git repo. Used for programming streams.
 
-![Screenshot of widget](https://i.imgur.com/m2lhlCj.png)
+![Screenshot of widget in horizontal layout](https://i.imgur.com/W8tUybp.png)
+![Screenshot of widget in stacked layout](https://i.imgur.com/bavyUnQ.png)
 
 Fonts and colors can be configured via `settings.json`. Most HTML fonts and color codes will work.
 

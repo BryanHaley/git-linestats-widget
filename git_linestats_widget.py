@@ -16,9 +16,10 @@ settings = {
         "enabled": True,
         "title": "Git Line Stats Widget",
         "background": "#00FFFF",
-        "geometry": "600x100",
+        "geometry": "500x100",
         "layout": "horizontal",
-        "refresh_rate": 5
+        "refresh_rate": 5,
+        "pad": 10
     },
     "separator": {
         "text": " | ",
@@ -78,12 +79,34 @@ want_quit = False
 def update_labels():
     while not want_quit:
         files_changed, insertions, deletions = get_git_info()
-        if files_changed == 1:
-            changed_files_label.config(text = str(files_changed) + " file changed")
-        else:
-            changed_files_label.config(text = str(files_changed) + " files changed")
-        plus_lines_label.config(text = "+" + str(insertions))
-        minus_lines_label.config(text = "-" + str(deletions))
+
+        if settings["window"]["enabled"]:
+            if files_changed == 1:
+                changed_files_label.config(text = str(files_changed) + " file changed")
+            else:
+                changed_files_label.config(text = str(files_changed) + " files changed")
+            plus_lines_label.config(text = "+" + str(insertions))
+            minus_lines_label.config(text = "-" + str(deletions))
+        
+        if settings["changed_files_file"]["enabled"]:
+            changed_files_file.seek(0)
+            changed_files_file.truncate()
+            if files_changed == 1:
+                changed_files_file.write(str(files_changed) + " file changed")
+            else:
+                changed_files_file.write(str(files_changed) + " files changed")
+            changed_files_file.flush()
+        if settings["plus_lines_file"]["enabled"]:
+            plus_lines_file.seek(0)
+            plus_lines_file.truncate()
+            plus_lines_file.write("+" + str(insertions))
+            plus_lines_file.flush()
+        if settings["minus_lines_file"]["enabled"]:
+            minus_lines_file.seek(0)
+            minus_lines_file.truncate()
+            minus_lines_file.write("-" + str(deletions))
+            minus_lines_file.flush()
+        
         time.sleep(settings["window"]["refresh_rate"])
 
 # Runs git diff and parses output
@@ -102,6 +125,7 @@ def get_git_info():
             # Call git subprocess
             diff_text = subprocess.check_output(['git', '--no-pager', 'diff', '--shortstat'], cwd=settings["repo"], startupinfo=sp_startup_info).decode("utf-8").strip()
         else:
+            # Call git subprocess without extra startup flags
             diff_text = subprocess.check_output(['git', '--no-pager', 'diff', '--shortstat'], cwd=settings["repo"]).decode("utf-8").strip()
         print(diff_text)
     
@@ -126,7 +150,7 @@ if __name__ == "__main__":
         temp_settings = settings
         try:
             # Load from JSON file
-            if (os.path.isfile("settings.json")):
+            if (os.path.exists("settings.json")):
                 with open("settings.json", "r") as settings_json:
                     temp_settings = json.load(settings_json)
             
@@ -153,88 +177,133 @@ if __name__ == "__main__":
                     "enabled": False,
                     "path": "minus_files.txt"
                 }
+            
+            # Add enabled property to window if not present
             if "enabled" not in temp_settings["window"]:
                 temp_settings["window"]["enabled"] = True
 
+            # Add pad value to settings if not present
+            if "pad" not in temp_settings["window"]:
+                temp_settings["window"]["pad"] = 0
+            
             # Write updated settings to disk
             with open("settings.json", "w") as settings_json:
-                settings_json.write(json.dumps(settings, indent=2))
+                settings_json.write(json.dumps(temp_settings, indent=2))
             
             # Could do more extensive testing here, but meh, it'll cause a runtime exception if something is bad
         except:
             bad_dialog = tk.Tk()
             bad_dialog.title("Error")
-            error_label_1 = tk.Label(text="COULD NOT LOAD SETTINGS")
-            error_label_2 = tk.Label(text=traceback.format_exc())
+            error_label_1 = tk.Label(bad_dialog, text="COULD NOT LOAD SETTINGS")
+            error_label_2 = tk.Label(bad_dialog, text=traceback.format_exc())
             error_label_1.pack(side='top')
             error_label_2.pack(side='top')
             bad_dialog.mainloop()
             temp_settings = settings
         settings = temp_settings
-        # Create main window
-        window = tk.Tk()
-        window.title(settings["window"]["title"])
-        window.configure(background=settings["window"]["background"])
-        window.geometry(settings["window"]["geometry"])
-        
-        # Create labels
-        changed_files_label = tk.Label(window,
-            text="100 file(s) changed",
-            background=settings["window"]["background"],
-            foreground=settings["changed_files"]["color"],
-            font=(settings["changed_files"]["font"], settings["changed_files"]["size"])
-        )
-        separator1 = tk.Label(window,
-            text=settings["separator"]["text"],
-            background=settings["window"]["background"],
-            foreground=settings["separator"]["color"],
-            font=(settings["separator"]["font"], settings["separator"]["size"])
-        )
-        plus_lines_label = tk.Label(window,
-            text="+1000",
-            background=settings["window"]["background"],
-            foreground=settings["plus_lines"]["color"],
-            font=(settings["plus_lines"]["font"], settings["plus_lines"]["size"])
-        )
-        separator2 = tk.Label(window,
-            text=settings["separator"]["text"],
-            background=settings["window"]["background"],
-            foreground=settings["separator"]["color"],
-            font=(settings["separator"]["font"], settings["separator"]["size"])
-        )
-        minus_lines_label = tk.Label(window,
-            text="-1000",
-            background=settings["window"]["background"],
-            foreground=settings["minus_lines"]["color"],
-            font=(settings["minus_lines"]["font"], settings["minus_lines"]["size"])
-        )
-        
-        # Pack labels based on layout orientation
-        if settings["window"]["layout"] == "horizontal":
-            if settings["changed_files"]["enabled"]:
-                changed_files_label.pack(side='left')
+
+        if settings["window"]["enabled"]:
+            # Create main window
+            window = tk.Tk()
+            window.title(settings["window"]["title"])
+            window.configure(background=settings["window"]["background"])
+            window.geometry(settings["window"]["geometry"])
+            
+            # Create labels
+            changed_files_label = tk.Label(window,
+                text="100 file(s) changed",
+                background=settings["window"]["background"],
+                foreground=settings["changed_files"]["color"],
+                font=(settings["changed_files"]["font"], settings["changed_files"]["size"])
+            )
+            separator1 = tk.Label(window,
+                text=settings["separator"]["text"],
+                background=settings["window"]["background"],
+                foreground=settings["separator"]["color"],
+                font=(settings["separator"]["font"], settings["separator"]["size"])
+            )
+            plus_lines_label = tk.Label(window,
+                text="+1000",
+                background=settings["window"]["background"],
+                foreground=settings["plus_lines"]["color"],
+                font=(settings["plus_lines"]["font"], settings["plus_lines"]["size"])
+            )
+            separator2 = tk.Label(window,
+                text=settings["separator"]["text"],
+                background=settings["window"]["background"],
+                foreground=settings["separator"]["color"],
+                font=(settings["separator"]["font"], settings["separator"]["size"])
+            )
+            minus_lines_label = tk.Label(window,
+                text="-1000",
+                background=settings["window"]["background"],
+                foreground=settings["minus_lines"]["color"],
+                font=(settings["minus_lines"]["font"], settings["minus_lines"]["size"])
+            )
+            
+            # Pack labels based on layout orientation
+            if settings["window"]["layout"] == "horizontal":
+                if settings["changed_files"]["enabled"]:
+                    changed_files_label.pack(side='left', padx = (settings["window"]["pad"], settings["window"]["pad"]))
+                    if settings["plus_lines"]["enabled"]:
+                        separator1.pack(side='left')
+                
                 if settings["plus_lines"]["enabled"]:
-                    separator1.pack(side='left')
-            
-            if settings["plus_lines"]["enabled"]:
-                plus_lines_label.pack(side='left')
-            
-            if settings["minus_lines"]["enabled"]:
-                if settings["plus_lines"]["enabled"] or settings["changed_files"]["enabled"]:
-                    separator2.pack(side='left')
-                minus_lines_label.pack(side='left')
-        else:
-            changed_files_label.pack(side='top')
-            plus_lines_label.pack(side='top')
-            minus_lines_label.pack(side='top')
+                    plus_lines_label.pack(side='left', padx = (settings["window"]["pad"], settings["window"]["pad"]))
+                
+                if settings["minus_lines"]["enabled"]:
+                    if settings["plus_lines"]["enabled"] or settings["changed_files"]["enabled"]:
+                        separator2.pack(side='left')
+                    minus_lines_label.pack(side='left', padx = (settings["window"]["pad"], settings["window"]["pad"]))
+            elif settings["window"]["layout"] == "stacked":
+                if settings["changed_files"]["enabled"]:
+                    changed_files_label.pack(side='top')
+                if settings["plus_lines"]["enabled"]:
+                    plus_lines_label.pack(side='left', padx = (settings["window"]["pad"], 0))
+                if settings["minus_lines"]["enabled"]:
+                    minus_lines_label.pack(side='right', padx = (0, settings["window"]["pad"]))
+            else:
+                if settings["changed_files"]["enabled"]:
+                    changed_files_label.pack(side='top')
+                if settings["plus_lines"]["enabled"]:
+                    plus_lines_label.pack(side='top')
+                if settings["minus_lines"]["enabled"]:
+                    minus_lines_label.pack(side='top')
         
+        try:
+            if settings["changed_files_file"]["enabled"]:
+                os.remove(settings["changed_files_file"]["path"])
+                changed_files_file = open(settings["changed_files_file"]["path"], "w+")
+            if settings["plus_lines_file"]["enabled"]:
+                os.remove(settings["plus_lines_file"]["path"])
+                plus_lines_file = open(settings["plus_lines_file"]["path"], "w+")
+            if settings["minus_lines_file"]["enabled"]:
+                os.remove(settings["minus_lines_file"]["path"])
+                minus_lines_file = open(settings["minus_lines_file"]["path"], "w+")
+        except:
+            bad_dialog = tk.Tk()
+            bad_dialog.title("Error")
+            error_label_1 = tk.Label(bad_dialog, text="COULD NOT OPEN FILES FOR WRITING")
+            error_label_2 = tk.Label(bad_dialog, text=traceback.format_exc())
+            error_label_1.pack(side='top')
+            error_label_2.pack(side='top')
+            bad_dialog.mainloop()
         
         # Start label updater thread
         update_thread = Thread(target=update_labels)
         update_thread.start()
         
-        # Start window main loop
-        window.mainloop()
+        if settings["window"]["enabled"]:
+            # Start window main loop
+            window.mainloop()
+        else:
+            print("Press Ctrl+C to exit")
+            # Idle until we get an exception then quit
+            try:
+                while True:
+                    time.sleep(0.1)
+            except:
+                print(traceback.format_exc())
         
         # Wait for the updater thread to quit then quit app
         want_quit = True

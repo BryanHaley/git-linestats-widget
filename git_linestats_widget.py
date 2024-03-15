@@ -13,6 +13,7 @@ from threading import Thread
 settings = {
     "repo": "C:/Path/To/Repository",
     "window": {
+        "enabled": True,
         "title": "Git Line Stats Widget",
         "background": "#00FFFF",
         "geometry": "600x100",
@@ -42,13 +43,28 @@ settings = {
         "font": "Arial",
         "size": 25,
         "color": "red"
+    },
+    "changed_files_file": {
+        "enabled": False,
+        "path": "changed_files.txt"
+    },
+    "plus_lines_file": {
+        "enabled": False,
+        "path": "plus_lines.txt"
+    },
+    "minus_lines_file": {
+        "enabled": False,
+        "path": "minus_files.txt"
     }
 }
 
-# Labels that will be updated in another thread
-changed_files = None
-plus_lines = None
-minus_lines = None
+# Labels and files that will be updated in another thread
+changed_files_label = None
+plus_lines_label = None
+minus_lines_label = None
+changed_files_file = None
+plus_lines_file = None
+minus_lines_file = None
 
 # Regular expressions for parsing git diff output
 changed_regex = re.compile("[0-9]+ file[s]* changed")
@@ -63,11 +79,11 @@ def update_labels():
     while not want_quit:
         files_changed, insertions, deletions = get_git_info()
         if files_changed == 1:
-            changed_files.config(text = str(files_changed) + " file changed")
+            changed_files_label.config(text = str(files_changed) + " file changed")
         else:
-            changed_files.config(text = str(files_changed) + " files changed")
-        plus_lines.config(text = "+" + str(insertions))
-        minus_lines.config(text = "-" + str(deletions))
+            changed_files_label.config(text = str(files_changed) + " files changed")
+        plus_lines_label.config(text = "+" + str(insertions))
+        minus_lines_label.config(text = "-" + str(deletions))
         time.sleep(settings["window"]["refresh_rate"])
 
 # Runs git diff and parses output
@@ -113,16 +129,36 @@ if __name__ == "__main__":
             if (os.path.isfile("settings.json")):
                 with open("settings.json", "r") as settings_json:
                     temp_settings = json.load(settings_json)
-            # No settings JSON found, generate one
-            else:
-                with open("settings.json", "w") as settings_json:
-                    settings_json.write(json.dumps(settings, indent=2))
+            
             # Test settings
             test = temp_settings["repo"]
             if not os.path.exists(test):
                 raise Exception("Repository path does not exist: " + test)
             if not os.path.exists(os.path.join(test, ".git")):
                 raise Exception("Path is not a git repository: " + test)
+            
+            # Check for new file settings
+            if "changed_files_file" not in temp_settings:
+                temp_settings["changed_files_file"] = {
+                    "enabled": False,
+                    "path": "changed_files.txt"
+                }
+            if "plus_lines_file" not in temp_settings:
+                temp_settings["plus_lines_file"] = {
+                    "enabled": False,
+                    "path": "plus_lines.txt"
+                }
+            if "minus_lines_file" not in temp_settings:
+                temp_settings["minus_lines_file"] = {
+                    "enabled": False,
+                    "path": "minus_files.txt"
+                }
+            if "enabled" not in temp_settings["window"]:
+                temp_settings["window"]["enabled"] = True
+
+            # Write updated settings to disk
+            with open("settings.json", "w") as settings_json:
+                settings_json.write(json.dumps(settings, indent=2))
             
             # Could do more extensive testing here, but meh, it'll cause a runtime exception if something is bad
         except:
@@ -142,7 +178,7 @@ if __name__ == "__main__":
         window.geometry(settings["window"]["geometry"])
         
         # Create labels
-        changed_files = tk.Label(window,
+        changed_files_label = tk.Label(window,
             text="100 file(s) changed",
             background=settings["window"]["background"],
             foreground=settings["changed_files"]["color"],
@@ -154,7 +190,7 @@ if __name__ == "__main__":
             foreground=settings["separator"]["color"],
             font=(settings["separator"]["font"], settings["separator"]["size"])
         )
-        plus_lines = tk.Label(window,
+        plus_lines_label = tk.Label(window,
             text="+1000",
             background=settings["window"]["background"],
             foreground=settings["plus_lines"]["color"],
@@ -166,7 +202,7 @@ if __name__ == "__main__":
             foreground=settings["separator"]["color"],
             font=(settings["separator"]["font"], settings["separator"]["size"])
         )
-        minus_lines = tk.Label(window,
+        minus_lines_label = tk.Label(window,
             text="-1000",
             background=settings["window"]["background"],
             foreground=settings["minus_lines"]["color"],
@@ -176,21 +212,21 @@ if __name__ == "__main__":
         # Pack labels based on layout orientation
         if settings["window"]["layout"] == "horizontal":
             if settings["changed_files"]["enabled"]:
-                changed_files.pack(side='left')
+                changed_files_label.pack(side='left')
                 if settings["plus_lines"]["enabled"]:
                     separator1.pack(side='left')
             
             if settings["plus_lines"]["enabled"]:
-                plus_lines.pack(side='left')
+                plus_lines_label.pack(side='left')
             
             if settings["minus_lines"]["enabled"]:
                 if settings["plus_lines"]["enabled"] or settings["changed_files"]["enabled"]:
                     separator2.pack(side='left')
-                minus_lines.pack(side='left')
+                minus_lines_label.pack(side='left')
         else:
-            changed_files.pack(side='top')
-            plus_lines.pack(side='top')
-            minus_lines.pack(side='top')
+            changed_files_label.pack(side='top')
+            plus_lines_label.pack(side='top')
+            minus_lines_label.pack(side='top')
         
         
         # Start label updater thread

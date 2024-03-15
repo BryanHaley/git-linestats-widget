@@ -1,5 +1,5 @@
 {
-  "repo": "C:/Path/To/Repository",
+  "repo": ".",
   "window": {
     "title": "Git Line Stats Widget",
     "background": "#00FFFF",
@@ -30,5 +30,17 @@
     "font": "Arial",
     "size": 25,
     "color": "red"
+  },
+  "changed_files_file": {
+    "enabled": false,
+    "path": "changed_files.txt"
+  },
+  "plus_lines_file": {
+    "enabled": false,
+    "path": "plus_lines.txt"
+  },
+  "minus_lines_file": {
+    "enabled": false,
+    "path": "minus_files.txt"
   }
 }

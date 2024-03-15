@@ -8,6 +8,7 @@ import traceback
 import platform
 import tkinter as tk
 from tkinter import *
+from tkinter.simpledialog import askstring
 from threading import Thread
 
 settings = {
@@ -155,11 +156,26 @@ if __name__ == "__main__":
                     temp_settings = json.load(settings_json)
             
             # Test settings
-            test = temp_settings["repo"]
-            if not os.path.exists(test):
-                raise Exception("Repository path does not exist: " + test)
-            if not os.path.exists(os.path.join(test, ".git")):
-                raise Exception("Path is not a git repository: " + test)
+                    
+            # Check for a valid repository and ask for one if we don't have it
+            if ("repo" not in temp_settings or
+                temp_settings["repo"] == "C:/Path/To/Repository" or
+                not os.path.exists(temp_settings["repo"]) or
+                not os.path.exists(os.path.join(temp_settings["repo"], ".git"))):
+                # Get input from user
+                temp_settings["repo"] = tk.simpledialog.askstring("Repository", "Enter the path to a repository")
+
+                # If they gave us an empty string, make it the current directory
+                if temp_settings["repo"].strip() == "":
+                    temp_settings["repo"] = "."
+
+                # Replace Windows-style path separators
+                temp_settings["repo"] = temp_settings["repo"].replace("\\", "/")
+            
+            if not os.path.exists(temp_settings["repo"]):
+                raise Exception("Repository path does not exist: " + temp_settings["repo"])
+            if not os.path.exists(os.path.join(temp_settings["repo"], ".git")):
+                raise Exception("Path is not a git repository: " + temp_settings["repo"])
             
             # Check for new file settings
             if "changed_files_file" not in temp_settings:

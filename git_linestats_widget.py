@@ -476,9 +476,16 @@ if __name__ == "__main__":
             except:
                 print(traceback.format_exc())
         
-        # Wait for the updater thread to quit then quit app
+        # Wait for the updater thread to finish then quit app
         want_quit = True
         update_thread.join()
+
+        if changed_files_file:
+            changed_files_file.close()
+        if plus_lines_file:
+            plus_lines_file.close()
+        if minus_lines_file:
+            minus_lines_file.close()
     except:
         bad_dialog = tk.Tk()
         bad_dialog.title("Error")

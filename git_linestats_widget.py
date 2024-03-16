@@ -15,6 +15,7 @@ from threading import Thread
 settings = {
     "repo": ["C:/Path/To/Repository"],
     "refresh_rate": 5,
+    "include_untracked_files": False,
     "window": {
         "enabled": True,
         "title": "Git Line Stats Widget",
@@ -87,6 +88,7 @@ want_quit = False
 def update_labels():
     while not want_quit:
         files_changed, insertions, deletions = get_git_info()
+        print(str(files_changed) + " files changed " + str(insertions) + " insertions " + str(deletions) + " deletions")
 
         if settings["window"]["enabled"] and not want_quit:
             # Update changed_files_label
@@ -157,12 +159,11 @@ def get_git_info():
                 sp_startup_info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                 sp_startup_info.wShowWindow = subprocess.SW_HIDE
 
-                # Call git subprocess
+                # Call git subprocess to get diff stats
                 diff_text = subprocess.check_output(['git', '--no-pager', 'diff', '--shortstat'], cwd=repo, startupinfo=sp_startup_info).decode("utf-8").strip()
             else:
-                # Call git subprocess without extra startup flags
+                # Call git subprocess to get diff stats without extra startup flags
                 diff_text = subprocess.check_output(['git', '--no-pager', 'diff', '--shortstat'], cwd=repo).decode("utf-8").strip()
-            print(diff_text)
         
             search_result = changed_regex.search(diff_text)
             if search_result:
@@ -176,6 +177,34 @@ def get_git_info():
             if search_result:
                 deletions += int(search_result.group(0).split()[0])
             
+            if settings["include_untracked_files"]:
+                if platform.system() == 'Windows':
+                    # Prevent a cmd prompt/terminal window from popping up
+                    sp_startup_info = subprocess.STARTUPINFO()
+                    sp_startup_info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                    sp_startup_info.wShowWindow = subprocess.SW_HIDE
+
+                    # Call git subprocess to get untracked files
+                    diff_text = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard'], cwd=repo, startupinfo=sp_startup_info).decode("utf-8").strip()
+                else:
+                    # Call git subprocess to get untracked files without extra startup flags
+                    diff_text = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard'], cwd=repo).decode("utf-8").strip()
+                
+                # Iterate through lines in the file to find out how many lines are in it
+                for file_path in diff_text.splitlines():
+                    file_path = os.path.join(repo, file_path)
+                    if os.path.exists(file_path):
+                        lines_added_from_file = 0
+                        try:
+                            with open(file_path, "r") as f:
+                                for l in f:
+                                    lines_added_from_file += 1
+                            insertions += lines_added_from_file
+                            files_changed += 1
+                        except UnicodeDecodeError:
+                            # This is a binary file, just count the file change and move on
+                            files_changed += 1
+
             # Try not to spam the CPU and disk
             time.sleep(0.1)
         except:
@@ -214,7 +243,7 @@ if __name__ == "__main__":
                     temp_settings["repo"][0] = "."
 
                 # Replace Windows-style path separators
-                temp_settings["repo"][0] = temp_settings["repo"].replace("\\", "/")
+                temp_settings["repo"][0] = temp_settings["repo"][0].replace("\\", "/")
             
             # Verify all repositories
             for repo in temp_settings["repo"]:
@@ -270,7 +299,11 @@ if __name__ == "__main__":
             
             # Add refresh rate if it's not present at all
             if "refresh_rate" not in temp_settings:
-                    temp_settings["refresh_rate"] = 5
+                temp_settings["refresh_rate"] = 5
+
+            # Add untracked files property if it's not present
+            if "include_untracked_files" not in temp_settings:
+                temp_settings["include_untracked_files"] = False
             
             # Write updated settings to disk
             with open("settings.json", "w") as settings_json:
@@ -371,6 +404,9 @@ if __name__ == "__main__":
             error_label_1.pack(side='top')
             error_label_2.pack(side='top')
             bad_dialog.mainloop()
+        
+        if settings["include_untracked_files"]:
+            print("Warning! Including untracked files is an expensive operation. If you have CPU or disk utilization issues, turn this off or decrease your refresh rate.")
         
         # Start label updater thread
         update_thread = Thread(target=update_labels)

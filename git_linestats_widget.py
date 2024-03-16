@@ -12,6 +12,7 @@ from tkinter import *
 from tkinter.simpledialog import askstring
 from threading import Thread
 
+# Default settings dict
 settings = {
     "repo": ["C:/Path/To/Repository"],
     "refresh_rate": 5,
@@ -68,6 +69,9 @@ settings = {
     }
 }
 
+# Memo for untracked files so we only re-read them when necessary
+untracked_file_memo = { }
+
 # Labels and files that will be updated in another thread
 changed_files_label = None
 plus_lines_label = None
@@ -84,8 +88,8 @@ minus_regex = re.compile("[0-9]+ deletion[s]*")
 # Signal to thread to quit
 want_quit = False
 
-# Runs in a thread to update the labels based on git diff output
-def update_labels():
+# Runs in a thread to update the labels and files based on git diff output
+def update_labels_and_files():
     while not want_quit:
         files_changed, insertions, deletions = get_git_info()
         print(str(files_changed) + " files changed " + str(insertions) + " insertions " + str(deletions) + " deletions")
@@ -165,6 +169,7 @@ def get_git_info():
                 # Call git subprocess to get diff stats without extra startup flags
                 diff_text = subprocess.check_output(['git', '--no-pager', 'diff', '--shortstat'], cwd=repo).decode("utf-8").strip()
         
+            # Extract stats from text
             search_result = changed_regex.search(diff_text)
             if search_result:
                 files_changed += int(search_result.group(0).split()[0])
@@ -177,6 +182,7 @@ def get_git_info():
             if search_result:
                 deletions += int(search_result.group(0).split()[0])
             
+            # Handle untracked files if enabled
             if settings["include_untracked_files"]:
                 if platform.system() == 'Windows':
                     # Prevent a cmd prompt/terminal window from popping up
@@ -194,16 +200,33 @@ def get_git_info():
                 for file_path in diff_text.splitlines():
                     file_path = os.path.join(repo, file_path)
                     if os.path.exists(file_path):
+                        # Check memo to see if we've read this file already and don't need to re-read it
+                        if file_path in untracked_file_memo:
+                            # Check if the modification date has changed
+                            if untracked_file_memo[file_path]["last_modified"] == os.path.getmtime(file_path):
+                                # We've already read this file, just get the known stats and skip reading it
+                                insertions += untracked_file_memo[file_path]["insertions"]
+                                files_changed += 1
+                                continue
+
+                        # File not in memo, we gotta read it
                         lines_added_from_file = 0
                         try:
+                            print ("Reading file " + file_path)
                             with open(file_path, "r") as f:
                                 for l in f:
                                     lines_added_from_file += 1
                             insertions += lines_added_from_file
                             files_changed += 1
+                            untracked_file_memo[file_path] = {}
+                            untracked_file_memo[file_path]["last_modified"] = os.path.getmtime(file_path)
+                            untracked_file_memo[file_path]["insertions"] = lines_added_from_file
                         except UnicodeDecodeError:
                             # This is a binary file, just count the file change and move on
                             files_changed += 1
+                            untracked_file_memo[file_path] = {}
+                            untracked_file_memo[file_path]["last_modified"] = os.path.getmtime(file_path)
+                            untracked_file_memo[file_path]["insertions"] = 0
 
             # Try not to spam the CPU and disk
             time.sleep(0.1)
@@ -406,10 +429,10 @@ if __name__ == "__main__":
             bad_dialog.mainloop()
         
         if settings["include_untracked_files"]:
-            print("Warning! Including untracked files is an expensive operation. If you have CPU or disk utilization issues, turn this off or decrease your refresh rate.")
+            print("Warning! Including untracked files can be an expensive operation when the files are added or changed. Turn this off if you have performance issues.")
         
         # Start label updater thread
-        update_thread = Thread(target=update_labels)
+        update_thread = Thread(target=update_labels_and_files)
         update_thread.start()
         
         if settings["window"]["enabled"]:

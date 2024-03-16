@@ -75,14 +75,14 @@ Edit `settings.json` and add additional repositories to the "repo" property.
 ```
 You **must** use forward slashes `/` or double backslashes `\\` for the path separators.
 
-## Track lines in untracked files
+## Count lines in untracked files
 Git won't report insertions from untracked files (i.e. files that haven't been committed yet). If you wish to include these, you can enable it here:
 
 ```json
 "include_untracked_files": true
 ```
 
-Note that this feature requires reading the untracked files, so it may be intensive on CPU and disk resources if you have many untracked files or large untracked files. If you run into issues, disable this, or try changing your refresh rate to update the stats less frequently.
+Note that this feature requires reading the untracked files when they are added or changed, so it may be intensive on CPU and disk resources at those times. If you have issues, turn this feature off.
 
 ## All settings
 ```json

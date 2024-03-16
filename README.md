@@ -63,6 +63,14 @@ In the properties of the text source, check "Read from file" and Browse and sele
 
 Repeat for the other two text files, and customize as desired.
 
+You'll likely also want to disable the GUI window if you're using text files instead:
+```json
+  "window": {
+    "enabled": false,
+    ...                     
+  },
+```
+
 
 ## Multiple repositories
 Edit `settings.json` and add additional repositories to the "repo" property.

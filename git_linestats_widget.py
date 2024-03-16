@@ -6,6 +6,7 @@ import re
 import subprocess
 import traceback
 import platform
+import sys
 import tkinter as tk
 from tkinter import *
 from tkinter.simpledialog import askstring
@@ -32,31 +33,37 @@ settings = {
         "enabled": True,
         "font": "Arial",
         "size": 25,
-        "color": "black"
+        "color": "black",
+        "number_only": False
     },
     "plus_lines": {
         "enabled": True,
         "font": "Arial",
         "size": 25,
-        "color": "green"
+        "color": "green",
+        "number_only": False
     },
     "minus_lines": {
         "enabled": True,
         "font": "Arial",
         "size": 25,
-        "color": "red"
+        "color": "red",
+        "number_only": False
     },
     "changed_files_file": {
         "enabled": False,
-        "path": "changed_files.txt"
+        "path": "changed_files.txt",
+        "number_only": False
     },
     "plus_lines_file": {
         "enabled": False,
-        "path": "plus_lines.txt"
+        "path": "plus_lines.txt",
+        "number_only": False
     },
     "minus_lines_file": {
         "enabled": False,
-        "path": "minus_files.txt"
+        "path": "minus_files.txt",
+        "number_only": False
     }
 }
 
@@ -82,30 +89,56 @@ def update_labels():
         files_changed, insertions, deletions = get_git_info()
 
         if settings["window"]["enabled"]:
-            if files_changed == 1:
+            # Update changed_files_label
+            if settings["changed_files"]["number_only"]:
+                changed_files_label.config(text = str(files_changed))
+            elif files_changed == 1:
                 changed_files_label.config(text = str(files_changed) + " file changed")
             else:
                 changed_files_label.config(text = str(files_changed) + " files changed")
-            plus_lines_label.config(text = "+" + str(insertions))
-            minus_lines_label.config(text = "-" + str(deletions))
+            
+            # Update plus_lines_label
+            if settings["plus_lines"]["number_only"]:
+                plus_lines_label.config(text = str(insertions))
+            else:
+                plus_lines_label.config(text = "+" + str(insertions))
+            
+            # Update minus_lines_label
+            if settings["minus_lines"]["number_only"]:
+                minus_lines_label.config(text = str(deletions))
+            else:
+                minus_lines_label.config(text = "-" + str(deletions))
         
+        # Update changed_files file
         if settings["changed_files_file"]["enabled"]:
             changed_files_file.seek(0)
             changed_files_file.truncate()
-            if files_changed == 1:
+            if settings["changed_files_file"]["number_only"]:
+                changed_files_file.write(str(files_changed))
+            elif files_changed == 1:
                 changed_files_file.write(str(files_changed) + " file changed")
             else:
                 changed_files_file.write(str(files_changed) + " files changed")
             changed_files_file.flush()
+        
+        # Update plus_lines file
         if settings["plus_lines_file"]["enabled"]:
             plus_lines_file.seek(0)
             plus_lines_file.truncate()
-            plus_lines_file.write("+" + str(insertions))
+            if settings["plus_lines_file"]["number_only"]:
+                plus_lines_file.write(str(insertions))
+            else:
+                plus_lines_file.write("+" + str(insertions))
             plus_lines_file.flush()
+        
+        # Update minus_lines file
         if settings["minus_lines_file"]["enabled"]:
             minus_lines_file.seek(0)
             minus_lines_file.truncate()
-            minus_lines_file.write("-" + str(deletions))
+            if settings["minus_lines_file"]["number_only"]:
+                minus_lines_file.write(str(deletions))
+            else:
+                minus_lines_file.write("-" + str(deletions))
             minus_lines_file.flush()
         
         time.sleep(settings["window"]["refresh_rate"])
@@ -201,6 +234,20 @@ if __name__ == "__main__":
             # Add pad value to settings if not present
             if "pad" not in temp_settings["window"]:
                 temp_settings["window"]["pad"] = 0
+
+            # Add number_only properties if not present
+            if "number_only" not in temp_settings["changed_files"]:
+                temp_settings["changed_files"]["number_only"] = False
+            if "number_only" not in temp_settings["plus_lines"]:
+                temp_settings["plus_lines"]["number_only"] = False
+            if "number_only" not in temp_settings["minus_lines"]:
+                temp_settings["minus_lines"]["number_only"] = False
+            if "number_only" not in temp_settings["changed_files_file"]:
+                temp_settings["changed_files_file"]["number_only"] = False
+            if "number_only" not in temp_settings["plus_lines_file"]:
+                temp_settings["plus_lines_file"]["number_only"] = False
+            if "number_only" not in temp_settings["minus_lines_file"]:
+                temp_settings["minus_lines_file"]["number_only"] = False
             
             # Write updated settings to disk
             with open("settings.json", "w") as settings_json:
@@ -215,7 +262,7 @@ if __name__ == "__main__":
             error_label_1.pack(side='top')
             error_label_2.pack(side='top')
             bad_dialog.mainloop()
-            temp_settings = settings
+            sys.exit(1)
         settings = temp_settings
 
         if settings["window"]["enabled"]:
@@ -288,13 +335,10 @@ if __name__ == "__main__":
         
         try:
             if settings["changed_files_file"]["enabled"]:
-                os.remove(settings["changed_files_file"]["path"])
                 changed_files_file = open(settings["changed_files_file"]["path"], "w+")
             if settings["plus_lines_file"]["enabled"]:
-                os.remove(settings["plus_lines_file"]["path"])
                 plus_lines_file = open(settings["plus_lines_file"]["path"], "w+")
             if settings["minus_lines_file"]["enabled"]:
-                os.remove(settings["minus_lines_file"]["path"])
                 minus_lines_file = open(settings["minus_lines_file"]["path"], "w+")
         except:
             bad_dialog = tk.Tk()
@@ -324,6 +368,7 @@ if __name__ == "__main__":
         # Wait for the updater thread to quit then quit app
         want_quit = True
         update_thread.join()
+        sys.exit(0)
     except:
         bad_dialog = tk.Tk()
         bad_dialog.title("Error")

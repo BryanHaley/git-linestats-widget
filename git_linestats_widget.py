@@ -14,13 +14,13 @@ from threading import Thread
 
 settings = {
     "repo": ["C:/Path/To/Repository"],
+    "refresh_rate": 5,
     "window": {
         "enabled": True,
         "title": "Git Line Stats Widget",
         "background": "#00FFFF",
         "geometry": "500x100",
         "layout": "horizontal",
-        "refresh_rate": 5,
         "pad": 10
     },
     "separator": {
@@ -88,7 +88,7 @@ def update_labels():
     while not want_quit:
         files_changed, insertions, deletions = get_git_info()
 
-        if settings["window"]["enabled"]:
+        if settings["window"]["enabled"] and not want_quit:
             # Update changed_files_label
             if settings["changed_files"]["number_only"]:
                 changed_files_label.config(text = str(files_changed))
@@ -98,13 +98,13 @@ def update_labels():
                 changed_files_label.config(text = str(files_changed) + " files changed")
             
             # Update plus_lines_label
-            if settings["plus_lines"]["number_only"]:
+            if settings["plus_lines"]["number_only"] and not want_quit:
                 plus_lines_label.config(text = str(insertions))
             else:
                 plus_lines_label.config(text = "+" + str(insertions))
             
             # Update minus_lines_label
-            if settings["minus_lines"]["number_only"]:
+            if settings["minus_lines"]["number_only"] and not want_quit:
                 minus_lines_label.config(text = str(deletions))
             else:
                 minus_lines_label.config(text = "-" + str(deletions))
@@ -141,7 +141,7 @@ def update_labels():
                 minus_lines_file.write("-" + str(deletions))
             minus_lines_file.flush()
         
-        time.sleep(settings["window"]["refresh_rate"])
+        time.sleep(settings["refresh_rate"])
 
 # Runs git diff and parses output
 def get_git_info():
@@ -176,6 +176,7 @@ def get_git_info():
             if search_result:
                 deletions += int(search_result.group(0).split()[0])
             
+            # Try not to spam the CPU and disk
             time.sleep(0.1)
         except:
             print(traceback.format_exc())
@@ -191,7 +192,7 @@ if __name__ == "__main__":
                 with open("settings.json", "r") as settings_json:
                     temp_settings = json.load(settings_json)
             
-            # Test settings
+            # Test settings. This section is mostly to maintain backwards compatibility with old settings files.
             
             # Check if we have the old style repo property
             if ("repo" in temp_settings and not isinstance(temp_settings["repo"], list)):
@@ -260,6 +261,16 @@ if __name__ == "__main__":
                 temp_settings["plus_lines_file"]["number_only"] = False
             if "number_only" not in temp_settings["minus_lines_file"]:
                 temp_settings["minus_lines_file"]["number_only"] = False
+            
+            # Move refresh rate if it's in the old place
+            if "refresh_rate" in temp_settings["window"]:
+                if "refresh_rate" not in temp_settings:
+                    temp_settings["refresh_rate"] = temp_settings["window"]["refresh_rate"]
+                del temp_settings["window"]["refresh_rate"]
+            
+            # Add refresh rate if it's not present at all
+            if "refresh_rate" not in temp_settings:
+                    temp_settings["refresh_rate"] = 5
             
             # Write updated settings to disk
             with open("settings.json", "w") as settings_json:

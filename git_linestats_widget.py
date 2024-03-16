@@ -275,6 +275,35 @@ if __name__ == "__main__":
                 if not os.path.exists(os.path.join(repo, ".git")):
                     raise Exception("Path is not a git repository: " + repo)
             
+            # Check for top-level properties
+            if "window" not in temp_settings:
+                temp_settings["window"] = settings["window"]
+                temp_settings["window"]["enabled"] = False # Assume if the property wasn't present the user wants it disabled
+            if "separator" not in temp_settings:
+                temp_settings["separator"] = settings["separator"]
+                temp_settings["separator"]["text"] = ""
+            if "changed_files" not in temp_settings:
+                temp_settings["changed_files"] = settings["changed_files"]
+                temp_settings["changed_files"]["enabled"] = False
+            if "plus_lines" not in temp_settings:
+                temp_settings["plus_lines"] = settings["plus_lines"]
+                temp_settings["plus_lines"]["enabled"] = False
+            if "minus_lines" not in temp_settings:
+                temp_settings["minus_lines"] = settings["minus_lines"]
+                temp_settings["minus_lines"]["enabled"] = False
+            if "changed_files_file" not in temp_settings:
+                temp_settings["changed_files_file"] = settings["changed_files_file"]
+                temp_settings["changed_files_file"]["enabled"] = False
+            if "plus_lines_file" not in temp_settings:
+                temp_settings["plus_lines_file"] = settings["plus_lines_file"]
+                temp_settings["plus_lines_file"]["enabled"] = False
+            if "minus_lines_file" not in temp_settings:
+                temp_settings["minus_lines_file"] = settings["minus_lines_file"]
+                temp_settings["minus_lines_file"]["enabled"] = False
+            if "include_untracked_files" not in temp_settings:
+                temp_settings["include_untracked_files"] = False
+            # Repo gets checked above, refresh_rate gets checked below
+            
             # Check for new file settings
             if "changed_files_file" not in temp_settings:
                 temp_settings["changed_files_file"] = {
@@ -322,7 +351,7 @@ if __name__ == "__main__":
             
             # Add refresh rate if it's not present at all
             if "refresh_rate" not in temp_settings:
-                temp_settings["refresh_rate"] = 5
+                temp_settings["refresh_rate"] = settings["refresh_rate"]
 
             # Add untracked files property if it's not present
             if "include_untracked_files" not in temp_settings:

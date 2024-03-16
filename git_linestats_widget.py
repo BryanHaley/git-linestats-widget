@@ -13,7 +13,7 @@ from tkinter.simpledialog import askstring
 from threading import Thread
 
 settings = {
-    "repo": "C:/Path/To/Repository",
+    "repo": ["C:/Path/To/Repository"],
     "window": {
         "enabled": True,
         "title": "Git Line Stats Widget",
@@ -149,33 +149,36 @@ def get_git_info():
     insertions = 0
     deletions = 0
     
-    try:
-        if platform.system() == 'Windows':
-            # Prevent a cmd prompt/terminal window from popping up
-            sp_startup_info = subprocess.STARTUPINFO()
-            sp_startup_info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            sp_startup_info.wShowWindow = subprocess.SW_HIDE
+    for repo in settings["repo"]:
+        try:
+            if platform.system() == 'Windows':
+                # Prevent a cmd prompt/terminal window from popping up
+                sp_startup_info = subprocess.STARTUPINFO()
+                sp_startup_info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                sp_startup_info.wShowWindow = subprocess.SW_HIDE
 
-            # Call git subprocess
-            diff_text = subprocess.check_output(['git', '--no-pager', 'diff', '--shortstat'], cwd=settings["repo"], startupinfo=sp_startup_info).decode("utf-8").strip()
-        else:
-            # Call git subprocess without extra startup flags
-            diff_text = subprocess.check_output(['git', '--no-pager', 'diff', '--shortstat'], cwd=settings["repo"]).decode("utf-8").strip()
-        print(diff_text)
-    
-        search_result = changed_regex.search(diff_text)
-        if search_result:
-            files_changed = int(search_result.group(0).split()[0])
+                # Call git subprocess
+                diff_text = subprocess.check_output(['git', '--no-pager', 'diff', '--shortstat'], cwd=repo, startupinfo=sp_startup_info).decode("utf-8").strip()
+            else:
+                # Call git subprocess without extra startup flags
+                diff_text = subprocess.check_output(['git', '--no-pager', 'diff', '--shortstat'], cwd=repo).decode("utf-8").strip()
+            print(diff_text)
         
-        search_result = plus_regex.search(diff_text)
-        if search_result:
-            insertions = int(search_result.group(0).split()[0])
-        
-        search_result = minus_regex.search(diff_text)
-        if search_result:
-            deletions = int(search_result.group(0).split()[0])
-    except:
-        print(traceback.format_exc())
+            search_result = changed_regex.search(diff_text)
+            if search_result:
+                files_changed += int(search_result.group(0).split()[0])
+            
+            search_result = plus_regex.search(diff_text)
+            if search_result:
+                insertions += int(search_result.group(0).split()[0])
+            
+            search_result = minus_regex.search(diff_text)
+            if search_result:
+                deletions += int(search_result.group(0).split()[0])
+            
+            time.sleep(0.1)
+        except:
+            print(traceback.format_exc())
     
     return (files_changed, insertions, deletions)
 
@@ -189,26 +192,35 @@ if __name__ == "__main__":
                     temp_settings = json.load(settings_json)
             
             # Test settings
-                    
+            
+            # Check if we have the old style repo property
+            if ("repo" in temp_settings and not isinstance(temp_settings["repo"], list)):
+                temp_settings["repo"] = [temp_settings["repo"]]
+
             # Check for a valid repository and ask for one if we don't have it
             if ("repo" not in temp_settings or
-                temp_settings["repo"] == "C:/Path/To/Repository" or
-                not os.path.exists(temp_settings["repo"]) or
-                not os.path.exists(os.path.join(temp_settings["repo"], ".git"))):
+                (
+                    len(temp_settings["repo"]) == 1 and # Assume if we have multiple repos they've messed with settings.json and this isn't a first run
+                    temp_settings["repo"][0] == "C:/Path/To/Repository" or
+                    not os.path.exists(temp_settings["repo"][0]) or
+                    not os.path.exists(os.path.join(temp_settings["repo"][0], ".git"))
+                )):
                 # Get input from user
-                temp_settings["repo"] = tk.simpledialog.askstring("Repository", "Enter the path to a repository")
+                temp_settings["repo"] = [tk.simpledialog.askstring("Repository", "Enter the path to a repository")]
 
                 # If they gave us an empty string, make it the current directory
-                if temp_settings["repo"].strip() == "":
-                    temp_settings["repo"] = "."
+                if temp_settings["repo"][0].strip() == "":
+                    temp_settings["repo"][0] = "."
 
                 # Replace Windows-style path separators
-                temp_settings["repo"] = temp_settings["repo"].replace("\\", "/")
+                temp_settings["repo"][0] = temp_settings["repo"].replace("\\", "/")
             
-            if not os.path.exists(temp_settings["repo"]):
-                raise Exception("Repository path does not exist: " + temp_settings["repo"])
-            if not os.path.exists(os.path.join(temp_settings["repo"], ".git")):
-                raise Exception("Path is not a git repository: " + temp_settings["repo"])
+            # Verify all repositories
+            for repo in temp_settings["repo"]:
+                if not os.path.exists(repo):
+                    raise Exception("Repository path does not exist: " + repo)
+                if not os.path.exists(os.path.join(repo, ".git")):
+                    raise Exception("Path is not a git repository: " + repo)
             
             # Check for new file settings
             if "changed_files_file" not in temp_settings:
@@ -368,7 +380,6 @@ if __name__ == "__main__":
         # Wait for the updater thread to quit then quit app
         want_quit = True
         update_thread.join()
-        sys.exit(0)
     except:
         bad_dialog = tk.Tk()
         bad_dialog.title("Error")

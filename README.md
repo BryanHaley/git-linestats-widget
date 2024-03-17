@@ -34,7 +34,7 @@ You may also need to add a crop filter to remove the window border depending on 
 # Advanced Usage
 
 ## Reading from file
-If want to customize things more than Tkinter's limited selection of fonts, you can export diff stats to text files and read them in OBS.
+If you want to customize things more than Tkinter's limited selection of fonts, you can export diff stats to text files and read them in OBS.
 
 In settings.json, change the `"enabled"` property of `"changed_files_file"`, `"plus_lines_file"`, and `"minus_lines_file"` to `true`.
 ```json

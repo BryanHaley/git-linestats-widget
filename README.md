@@ -24,7 +24,7 @@ Lastly, you'll need tkinter installed. You can install this with your package ma
 
 Download and extract the repository (click the green "Code" button -> "Download as zip").
 
-Launch the widget using `python git_linestats_widget.py`, by double clicking `launch.bat` on Windows, or by running the 'launch.sh' file on Linux. It will ask you for a path to a repository on the first run.
+Launch the widget using `python git_linestats_widget.py`, by double clicking `launch.bat` on Windows, or by running the `launch.sh` file on Linux. It will ask you for a path to a repository on the first run.
 
 ![Repository prompt](https://i.imgur.com/hlNmFhn.png)
 

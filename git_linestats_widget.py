@@ -273,6 +273,9 @@ if __name__ == "__main__":
 
                 # Replace Windows-style path separators
                 temp_settings["repo"][0] = temp_settings["repo"][0].replace("\\", "/")
+
+                # expand ~ in 
+                temp_settings["repo"][0] = os.path.expanduser(temp_settings["repo"][0])
                 
 
 

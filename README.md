@@ -17,8 +17,6 @@ You need [Python3](https://www.python.org/downloads/) installed (and on the PATH
 
 You'll also need git installed and on the PATH, which you presumably should already if you have a git repository.
 
-Lastly, you'll need tkinter installed. You can install this with your package manager on Linux, or the installation exe on Windows. 
-
 
 # Usage
 

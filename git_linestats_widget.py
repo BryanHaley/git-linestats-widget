@@ -267,7 +267,12 @@ if __name__ == "__main__":
 
                 # Replace Windows-style path separators
                 temp_settings["repo"][0] = temp_settings["repo"][0].replace("\\", "/")
-            
+                
+
+            # expand ~ in all repo's specified
+            for index in range(0, len(temp_settings["repo"])):
+                temp_settings["repo"][index] = os.path.expanduser(temp_settings["repo"][index])
+
             # Verify all repositories
             for repo in temp_settings["repo"]:
                 if not os.path.exists(repo):

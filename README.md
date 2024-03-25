@@ -17,11 +17,12 @@ You need [Python3](https://www.python.org/downloads/) installed (and on the PATH
 
 You'll also need git installed and on the PATH, which you presumably should already if you have a git repository.
 
+
 # Usage
 
 Download and extract the repository (click the green "Code" button -> "Download as zip").
 
-Launch the widget using `python git_linestats_widget.py` or by double clicking `launch.bat` on Windows. It will ask you for a path to a repository on the first run.
+Launch the widget using `python git_linestats_widget.py`, by double clicking `launch.bat` on Windows, or by running the `launch.sh` file on Linux. It will ask you for a path to a repository on the first run.
 
 ![Repository prompt](https://i.imgur.com/hlNmFhn.png)
 

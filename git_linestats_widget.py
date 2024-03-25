@@ -244,11 +244,17 @@ if __name__ == "__main__":
                 with open("settings.json", "r") as settings_json:
                     temp_settings = json.load(settings_json)
             
+
             # Test settings. This section is mostly to maintain backwards compatibility with old settings files.
             
             # Check if we have the old style repo property
             if ("repo" in temp_settings and not isinstance(temp_settings["repo"], list)):
                 temp_settings["repo"] = [temp_settings["repo"]]
+
+
+            # expand ~ in all repo's specified
+            for index in range(0, len(temp_settings["repo"])):
+                temp_settings["repo"][index] = os.path.expanduser(temp_settings["repo"][index])
 
             # Check for a valid repository and ask for one if we don't have it
             if ("repo" not in temp_settings or
@@ -267,7 +273,12 @@ if __name__ == "__main__":
 
                 # Replace Windows-style path separators
                 temp_settings["repo"][0] = temp_settings["repo"][0].replace("\\", "/")
-            
+
+                # expand ~ in input from user 
+                temp_settings["repo"][0] = os.path.expanduser(temp_settings["repo"][0])
+                
+
+
             # Verify all repositories
             for repo in temp_settings["repo"]:
                 if not os.path.exists(repo):
